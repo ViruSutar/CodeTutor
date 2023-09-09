@@ -1,7 +1,10 @@
 import express, { Request, Response } from "express";
-import PostgresDataSource from "./Config/db"
+import AppDataSource from "./Config/db"
 const app = express();
 import { rateLimit } from "express-rate-limit";
+import dotenv from 'dotenv'
+
+dotenv.config({path:'./.env'})
 
 
 // Rate limiter to avoid misuse of the service and avoid cost spikes
@@ -21,19 +24,11 @@ import { rateLimit } from "express-rate-limit";
 // });
 
 
-app.use()
 app.use(express.json());
 
 
-// Public routes
-app.use()
-
-
-
-
-
 // Database connection
-PostgresDataSource.initialize()
+AppDataSource.initialize()
     .then(() => {
         console.log("Data Source has been initialized!")
     })

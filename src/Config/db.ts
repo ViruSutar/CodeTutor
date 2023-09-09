@@ -1,16 +1,17 @@
-import { DataSource } from "typeorm"
 import { entities } from "./Entities"
+import { DataSource } from "typeorm"
 
-
-export default new DataSource({
-    type: "postgres",
-    host: "localhost",
-    synchronize:true,
-    port: 5432,
+const AppDataSource = new DataSource({
+    type: 'mysql',
+    host: 'localhost',
+    port: 3306,
+    // synchronize:true,
     username: "viraj",
-    password: "viraj",
+    password: "viraj1234",
     database: "codetutor",
     entities: entities,
 })
+
+export default AppDataSource;
 
 
