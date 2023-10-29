@@ -3,6 +3,7 @@ import AppDataSource from "./Config/db"
 const app = express();
 import { rateLimit } from "express-rate-limit";
 import dotenv from 'dotenv'
+import UserRouter from "./routes/auth/user.routes";
 
 dotenv.config({path:'./.env'})
 
@@ -26,6 +27,8 @@ dotenv.config({path:'./.env'})
 
 app.use(express.json());
 
+
+app.use('/api/auth/v1',UserRouter)
 
 // Database connection
 AppDataSource.initialize()

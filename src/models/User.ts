@@ -5,44 +5,37 @@ import jwt from "jsonwebtoken";
 @Entity({ name: "Users" })
 export class User {
   @PrimaryGeneratedColumn()
-  id!: number;
+ public id!: number;
   @Column()
-  firstName!: string;
+  public firstName!: string;
 
   @Column({ unique: true })
-  email!: String;
+  public email!: String;
 
   @Column()
-  lastName!: string;
+  public lastName!: string;
 
   @Column()
-  password!: string;
+  public password!: string;
 
   @Column()
-  refreshToken!: string;
+  public refreshToken!:string
 
   @Column()
-  isActive!: boolean;
+  public isActive!: boolean;
 
   public async isPasswordCorrect(password: string) {
     return await bcrypt.compare(password, this.password);
   }
 
   public async generateAccessToken() {
-    const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
-    console.log("accessTokenSecret",accessTokenSecret)
-    if (!accessTokenSecret) {
-      throw new Error("ACCESS_TOKEN_SECRET not defined in environment");
-    }
-
-    return jwt.sign(
-      {
-        id: this.id,
-        email: this.email,
-        firstName: this.firstName,
-      },
-      accessTokenSecret,
-      { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    return jwt.sign({
+      id: this.id,
+      email: this.email,
+      firstName: this.firstName,
+    },
+    process.env.ACCESS_TOKEN_SECRET!,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
     );
   }
 
@@ -56,7 +49,7 @@ export class User {
       {
         _id: this.id,
       },
-      refreshTokenSecret,
+      process.env.REFRESH_TOKEN_SECRET!,
       { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
     );
   }
