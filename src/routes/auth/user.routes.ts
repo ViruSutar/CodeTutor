@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { userRegisterValidator } from "../../validator/auth/user.validator";
-import { validate } from "../../validator/validate";
+import { registerUser } from "../../controllers/user.controller";
+// import { validate } from "../../validator/validate";
 
 
 const router = Router()
@@ -13,4 +14,7 @@ const router = Router()
 // login ,auth ,logout route 
 
 // Unsecured route
-router.route("/register").post(userRegisterValidator(),validate)
+router.route("/register").post(userRegisterValidator(),registerUser)
+
+
+export default router;
