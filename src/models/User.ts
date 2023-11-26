@@ -2,7 +2,6 @@ import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-
 @Entity({ name: "Users" })
 export class User {
   @PrimaryGeneratedColumn()
@@ -40,8 +39,13 @@ export class User {
     );
   }
 
-  public async generateRefreshToken(){
-   return jwt.sign(
+  public async generateRefreshToken() {
+    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
+    if (!refreshTokenSecret) {
+      throw new Error("REFRESH_TOKEN_SECRET not defined in environment");
+    }
+
+    return jwt.sign(
       {
         _id: this.id,
       },
