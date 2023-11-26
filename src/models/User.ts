@@ -10,7 +10,7 @@ export class User {
   public firstName!: string;
 
   @Column({ unique: true })
-  public email!: String;
+  public email!: string;
 
   @Column()
   public lastName!: string;

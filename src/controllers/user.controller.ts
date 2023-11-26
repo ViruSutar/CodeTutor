@@ -3,8 +3,8 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 import { User } from "../models/User";
 import AppDataSource from "../Config/db";
 // import { Error om "../utils/Error"port
-import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { loginUserService, registerUserService } from "../services/AuthService";
 const UserRepository = AppDataSource.getRepository(User);
 
 const generateAccessAndRefreshTokens = async (userId: number) => {
@@ -29,82 +29,69 @@ const generateAccessAndRefreshTokens = async (userId: number) => {
   }
 };
 const registerUser = async (req: Request, res: Response) => {
-  console.log("Inside registerUser")
-  const { email, firstName, password, lastName } = req.body;
+  try {
+    const { email, firstName, password, lastName } = req.body;
 
-  // check if user exists with that username and email
-  const existedUser = await UserRepository.findOne({ where: { email } });
+    let result = await registerUserService(
+      email,
+      firstName,
+      password,
+      lastName
+    );
 
-  if (existedUser) {
-    throw new Error("User with email already exists");
-  }
+    if (!result.status) {
+      return res.status(result.statusCode ?? 500).json({
+        status: false,
+        message: result.message,
+      });
+    }
 
-  // Hash password
-  const salt = await bcrypt.genSalt(Number(process.env.SALT));
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  //  /TODO: Think about adding role for User table
-  const user = await UserRepository.create({
-    email,
-    firstName,
-    lastName,
-    password: hashedPassword,
-  });
-
-  if (!user) {
-    throw new Error("Something went wrong while registering the user");
-  }
-  return res
-    .status(201)
-    .json({
-      status:true,
-      message:"User is registerd successfully"
+    return res.status(201).json({
+      status: true,
+      message: "Succesfully Register User",
     });
+  } catch (error) {
+    console.error("<---Error in registerUser--->", error);
+    return res.status(500).json({
+      status: false,
+      message: "Failed to create user please try again later",
+    });
+  }
 };
 
 const loginUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!email && !password) {
-    throw new Error("email or password is required");
+    let result = await loginUserService(email, password);
+    let { accessToken, options, refreshToken, status, statusCode } = result;
+
+    if(!result || !accessToken || !refreshToken || !options){
+      throw "Result not found"
+    }
+    if (!status) {
+      return res.status(statusCode ?? 500).json({
+        status: false,
+        message: result.message,
+      });
+    }
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json({
+        status: result.status,
+        statusCode: result.statusCode,
+        message: result.message,
+      });
+  } catch (error) {
+    console.error("<---Error in loginUser function --->");
+    return res.status(500).json({
+      status: false,
+      message: "Unable to login User please try again later",
+    });
   }
-
-  const user = await UserRepository.findOne({ where: { email } });
-
-  if (!user) {
-    throw new Error("User does not exist");
-  }
-
-  const isPasswordValid = await user.isPasswordCorrect(password);
-
-  if (!isPasswordValid) {
-    throw new Error("Invalid user credentials");
-  }
-
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-    user.id
-  );
-
-  // get the user document ignoring the password and refreshToken field
-  //   TODO: why we need to call this agains
-  const loggedInUser = await UserRepository.findOne({ where: { id: user.id } });
-  // ,select:{password,refreshToken}
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  };
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options) // set the access token in the cookie
-    .cookie("refreshToken", refreshToken, options) // set the refresh token in the cookie
-    // .json(
-    //   new ApiResponse(
-    //     200,
-    //     { user: loggedInUser, accessToken, refreshToken }, // send access and refresh token in response if client decides to save them by themselves
-    //     "User logged in successfully"
-    //   )
-    // );
 };
 
 const logoutUser = async (req: Request, res: Response) => {
@@ -120,8 +107,8 @@ const logoutUser = async (req: Request, res: Response) => {
   return res
     .status(200)
     .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    // .json(new ApiResponse(200, {}, "User logged out"));
+    .clearCookie("refreshToken", options);
+  // .json(new ApiResponse(200, {}, "User logged out"));
 };
 
 // const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -173,60 +160,59 @@ const logoutUser = async (req: Request, res: Response) => {
 //   }
 // });
 
-export const refreshAccessToken = 
-  async (req: Request, res: Response) => {
-    const incomingRefreshToken =
-      req.cookies.refreshToken || req.body.refreshToken;
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
 
-    if (!incomingRefreshToken) {
-      throw new Error("Unauthorized request");
-    }
+  if (!incomingRefreshToken) {
+    throw new Error("Unauthorized request");
+  }
 
-    try {
-      const decodedToken = jwt.verify(
-        incomingRefreshToken,
-        process.env.REFRESH_TOKEN_SECRET!
-      ) as { _id: number }; // Type assertion for decodedToken
-      let user: User | null;
-      // user = await UserRepository.findOne({ id: decodedToken?._id });
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    ) as { _id: number }; // Type assertion for decodedToken
+    let user: User | null;
+    // user = await UserRepository.findOne({ id: decodedToken?._id });
 
-      user = await UserRepository.findOneBy({id: decodedToken?._id})
+    user = await UserRepository.findOneBy({ id: decodedToken?._id });
 
-      // if (user.length === 0) {
-      //   throw new Error('Invalid refresh token');
-      // }
+    // if (user.length === 0) {
+    //   throw new Error('Invalid refresh token');
+    // }
 
-      if (!user) {
-        throw new Error("Invalid refresh token");
-      }
-
-      if (incomingRefreshToken !== user?.refreshToken) {
-        throw new Error("Refresh token is expired or used");
-      }
-
-      const options = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-      };
-
-      const { accessToken, refreshToken: newRefreshToken } =
-        await generateAccessAndRefreshTokens(user.id);
-
-      return res
-        .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
-        // .json(
-        //   new ApiResponse(
-        //     200,
-        //     { accessToken, refreshToken: newRefreshToken },
-        //     "Access token refreshed"
-        //   )
-        // );
-    } catch (error) {
-      // throw new Error(error?.message || "Invalid refresh token");
+    if (!user) {
       throw new Error("Invalid refresh token");
     }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new Error("Refresh token is expired or used");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    };
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await generateAccessAndRefreshTokens(user.id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options);
+    // .json(
+    //   new ApiResponse(
+    //     200,
+    //     { accessToken, refreshToken: newRefreshToken },
+    //     "Access token refreshed"
+    //   )
+    // );
+  } catch (error) {
+    // throw new Error(error?.message || "Invalid refresh token");
+    throw new Error("Invalid refresh token");
   }
+};
 
 export { registerUser, loginUser, logoutUser };

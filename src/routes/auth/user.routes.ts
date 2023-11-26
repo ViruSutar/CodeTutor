@@ -16,5 +16,7 @@ const router = Router()
 // Unsecured route
 router.route("/register").post(userRegisterValidator(),registerUser)
 
+// router.route('/login').post()
+
 
 export default router;
