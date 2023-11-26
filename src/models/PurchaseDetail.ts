@@ -2,21 +2,21 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 't
 import { User } from './User';
 import { Course } from './Course';
 
-@Entity({name:'purchase_details'})
+@Entity({name:'PurchaseDetails'})
 export class PurchaseDetail {
   @PrimaryGeneratedColumn()
     id!: number;
 
-  @Column({ nullable: true })
+  @Column()
     userId!: number;
 
-  @Column({ nullable: true })
+  @Column()
     purchaseType!: number;
 
-  @Column({ nullable: true })
+  @Column()
     courseId!: number;
 
-  @Column({ nullable: true })
+  @Column()
     expiryDate!: Date;
 
   @ManyToOne(() => User)

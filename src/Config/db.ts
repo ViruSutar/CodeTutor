@@ -2,12 +2,12 @@ import { entities } from "./Entities"
 import { DataSource } from "typeorm"
 
 const AppDataSource = new DataSource({
-    type: 'mysql',
-    host: 'localhost',
-    port: 3306,
+    type: "postgres",
+    host: "localhost",
     synchronize:true,
+    port: 5432,
     username: "viraj",
-    password: "Viraj@2402",
+    password: "viraj",
     database: "codetutor",
     entities: entities,
 })

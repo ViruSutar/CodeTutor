@@ -1,17 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from './User';
 
-@Entity({name:'course_video_comments'})
+@Entity({name:'CourseVideoComments'})
 export class CourseVideoComment {
   @PrimaryGeneratedColumn()
     id!: number;
 
-  @Column({ nullable: true })
+  @Column()
     comment!: string;
 
   @ManyToOne(() => User)
     user!: User;
 
-  @Column({ nullable: true })
+  @Column()
     userName!: string;
 }

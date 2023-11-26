@@ -29,6 +29,7 @@ const generateAccessAndRefreshTokens = async (userId: number) => {
   }
 };
 const registerUser = async (req: Request, res: Response) => {
+  console.log("Inside registerUser")
   const { email, firstName, password, lastName } = req.body;
 
   // check if user exists with that username and email
@@ -55,7 +56,10 @@ const registerUser = async (req: Request, res: Response) => {
   }
   return res
     .status(201)
-    // .json(new ApiResponse(200, "User is registerd successfully"));
+    .json({
+      status:true,
+      message:"User is registerd successfully"
+    });
 };
 
 const loginUser = async (req: Request, res: Response) => {

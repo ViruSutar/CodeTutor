@@ -1,21 +1,21 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { CourseSection } from './CourseSection';
 
-@Entity({name:'course_videos'})
+@Entity({name:'CourseVideos'})
 export class CourseVideo {
   @PrimaryGeneratedColumn()
     id!: number;
 
-  @Column({ nullable: true })
+  @Column()
     title!: string;
 
-  @Column({ nullable: true })
+  @Column()
     length!: number;
 
-  @Column({ nullable: true })
+  @Column()
     sectionId!: number;
 
-  @Column({ nullable: true })
+  @Column()
     url!: string;
 
   @ManyToOne(() => CourseSection)

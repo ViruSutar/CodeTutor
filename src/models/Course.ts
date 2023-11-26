@@ -6,31 +6,31 @@ export class Course {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: true })
+  @Column()
   title!: string;
 
-  @Column({ nullable: true })
+  @Column()
   goals!: string;
 
-  @Column({ nullable: true })
+  @Column()
   price!: number;
 
-  @Column({ nullable: true })
+  @Column()
   hours!: number;
 
-  @Column({ nullable: true })
+  @Column()
   subTitle!: string;
 
-  @Column({ nullable: true })
+  @Column()
   description!: string;
 
-  @Column({ nullable: true })
+  @Column()
   creatorId!: number;
 
-  @Column({ nullable: true })
+  @Column()
   studentsCount!: number;
 
-  @Column({ nullable: true })
+  @Column()
   creatorDetails!: string;
 
   @Column({ nullable: true })

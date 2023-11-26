@@ -7,13 +7,13 @@ export class Reply {
   @PrimaryGeneratedColumn()
     id!: number;
 
-  @Column({ nullable: true })
+  @Column()
     replyText!: string;
 
   @ManyToOne(() => User)
     user!: User;
 
-  @Column({ nullable: true })
+  @Column()
     userName!: string;
 
   @ManyToOne(() => CourseVideoComment)

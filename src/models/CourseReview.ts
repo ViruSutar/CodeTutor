@@ -2,15 +2,15 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from './User';
 import { Course } from './Course';
 
-@Entity({name:'course_reviews'})
+@Entity({name:'CourseReviews'})
 export class CourseReview {
   @PrimaryGeneratedColumn()
     id!: number;
 
-  @Column({ nullable: true })
+  @Column()
     rating!: number;
 
-  @Column({ nullable: true })
+  @Column()
     comment!: string;
 
   @ManyToOne(() => User)
