@@ -5,9 +5,9 @@ const AppDataSource = new DataSource({
     type: 'mysql',
     host: 'localhost',
     port: 3306,
-    // synchronize:true,
+    synchronize:true,
     username: "viraj",
-    password: "viraj1234",
+    password: "Viraj@2402",
     database: "codetutor",
     entities: entities,
 })

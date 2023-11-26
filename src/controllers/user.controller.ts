@@ -1,10 +1,8 @@
 import { DataSource } from "typeorm";
-import { asyncHandler } from "../utils/asyncHandler";
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { User } from "../models/User";
 import AppDataSource from "../Config/db";
 // import { Error om "../utils/Error"port
-import { ApiResponse } from "../utils/ApiResponse";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 const UserRepository = AppDataSource.getRepository(User);
@@ -30,7 +28,7 @@ const generateAccessAndRefreshTokens = async (userId: number) => {
     throw new Error("Something went wrong while generating the access token");
   }
 };
-const registerUser = asyncHandler(async (req: Request, res: Response) => {
+const registerUser = async (req: Request, res: Response) => {
   const { email, firstName, password, lastName } = req.body;
 
   // check if user exists with that username and email
@@ -57,10 +55,10 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
   }
   return res
     .status(201)
-    .json(new ApiResponse(200, "User is registerd successfully"));
-});
+    // .json(new ApiResponse(200, "User is registerd successfully"));
+};
 
-const loginUser = asyncHandler(async (req: Request, res: Response) => {
+const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email && !password) {
@@ -96,16 +94,16 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     .status(200)
     .cookie("accessToken", accessToken, options) // set the access token in the cookie
     .cookie("refreshToken", refreshToken, options) // set the refresh token in the cookie
-    .json(
-      new ApiResponse(
-        200,
-        { user: loggedInUser, accessToken, refreshToken }, // send access and refresh token in response if client decides to save them by themselves
-        "User logged in successfully"
-      )
-    );
-});
+    // .json(
+    //   new ApiResponse(
+    //     200,
+    //     { user: loggedInUser, accessToken, refreshToken }, // send access and refresh token in response if client decides to save them by themselves
+    //     "User logged in successfully"
+    //   )
+    // );
+};
 
-const logoutUser = asyncHandler(async (req: Request, res: Response) => {
+const logoutUser = async (req: Request, res: Response) => {
   const userId: number = req.body.userId;
 
   await UserRepository.update({ id: userId }, { refreshToken: undefined });
@@ -119,8 +117,8 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out"));
-});
+    // .json(new ApiResponse(200, {}, "User logged out"));
+};
 
 // const refreshAccessToken = asyncHandler(async (req, res) => {
 //   const incomingRefreshToken =
@@ -171,7 +169,7 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 //   }
 // });
 
-export const refreshAccessToken = asyncHandler(
+export const refreshAccessToken = 
   async (req: Request, res: Response) => {
     const incomingRefreshToken =
       req.cookies.refreshToken || req.body.refreshToken;
@@ -214,18 +212,17 @@ export const refreshAccessToken = asyncHandler(
         .status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", newRefreshToken, options)
-        .json(
-          new ApiResponse(
-            200,
-            { accessToken, refreshToken: newRefreshToken },
-            "Access token refreshed"
-          )
-        );
+        // .json(
+        //   new ApiResponse(
+        //     200,
+        //     { accessToken, refreshToken: newRefreshToken },
+        //     "Access token refreshed"
+        //   )
+        // );
     } catch (error) {
       // throw new Error(error?.message || "Invalid refresh token");
       throw new Error("Invalid refresh token");
     }
   }
-);
 
 export { registerUser, loginUser, logoutUser };
