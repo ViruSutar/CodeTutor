@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { userRegisterValidator } from "../../validator/auth/user.validator";
-import { registerUser } from "../../controllers/user.controller";
+import { LoginValidator, RegisterValidator } from "../../validator/auth/user.validator";
+import { loginUser, registerUser,refreshAccessToken } from "../../controllers/user.controller";
+import { validate } from "../../validator/validate";
 // import { validate } from "../../validator/validate";
 
 
@@ -14,9 +15,11 @@ const router = Router()
 // login ,auth ,logout route 
 
 // Unsecured route
-router.route("/register").post(userRegisterValidator(),registerUser)
+router.route("/register").post(RegisterValidator(),validate,registerUser)
 
-// router.route('/login').post()
+router.route('/login').post(LoginValidator(),validate,loginUser)
+router.route("/refresh-token").post(refreshAccessToken);
+
 
 
 export default router;

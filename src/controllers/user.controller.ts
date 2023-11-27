@@ -2,9 +2,14 @@ import { DataSource } from "typeorm";
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { User } from "../models/User";
 import AppDataSource from "../Config/db";
-// import { Error om "../utils/Error"port
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { loginUserService, registerUserService } from "../services/AuthService";
+import {
+  loginUserService,
+  logoutUserService,
+  refreshAccessTokenService,
+  registerUserService,
+} from "../services/AuthService";
+import { validationResult } from "express-validator";
 const UserRepository = AppDataSource.getRepository(User);
 
 const generateAccessAndRefreshTokens = async (userId: number) => {
@@ -30,8 +35,12 @@ const generateAccessAndRefreshTokens = async (userId: number) => {
 };
 const registerUser = async (req: Request, res: Response) => {
   try {
+    const errors = validationResult(req);
     const { email, firstName, password, lastName } = req.body;
 
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
     let result = await registerUserService(
       email,
       firstName,
@@ -64,16 +73,25 @@ const loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     let result = await loginUserService(email, password);
-    let { accessToken, options, refreshToken, status, statusCode } = result;
+    let {
+      accessToken,
+      options,
+      refreshToken,
+      status,
+      statusCode,
+      message,
+      user,
+    } = result;
 
-    if(!result || !accessToken || !refreshToken || !options){
-      throw "Result not found"
-    }
     if (!status) {
       return res.status(statusCode ?? 500).json({
         status: false,
-        message: result.message,
+        message: message,
       });
+    }
+
+    if (!result || !accessToken || !refreshToken || !options) {
+      throw "Result not found";
     }
 
     return res
@@ -81,12 +99,14 @@ const loginUser = async (req: Request, res: Response) => {
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
       .json({
-        status: result.status,
-        statusCode: result.statusCode,
-        message: result.message,
+        status: true,
+        message: "User logged in successfully",
+        user: user,
+        accessToken,
+        refreshToken,
       });
   } catch (error) {
-    console.error("<---Error in loginUser function --->");
+    console.error("<---Error in loginUser function --->", error);
     return res.status(500).json({
       status: false,
       message: "Unable to login User please try again later",
@@ -95,123 +115,60 @@ const loginUser = async (req: Request, res: Response) => {
 };
 
 const logoutUser = async (req: Request, res: Response) => {
-  const userId: number = req.body.userId;
+  try {
+    const userId: number = req.body.userId;
 
-  await UserRepository.update({ id: userId }, { refreshToken: undefined });
+    let result = await logoutUserService(userId);
+    let {
+      options,
+    } = result;
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  };
-
-  return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options);
-  // .json(new ApiResponse(200, {}, "User logged out"));
+    return res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json({status:true,message:"Successfully logged out"});
+  } catch (error) {
+    return res.status(500).json({
+      status:false,
+      message:"Failed to logout"
+    })
+  }
 };
 
-// const refreshAccessToken = asyncHandler(async (req, res) => {
-//   const incomingRefreshToken =
-//     req.cookies.refreshToken || req.body.refreshToken;
-
-//   if (!incomingRefreshToken) {
-//     throw new Error( "Unauthorized request");
-//   }
-
-//   try {
-//     const decodedToken = jwt.verify(
-//       incomingRefreshToken,
-//       process.env.REFRESH_TOKEN_SECRET!
-//     );
-//     const user = await UserRepository.findBy({id:decodedToken?._id});
-//     if (!user) {
-//       throw new Error( "Invalid refresh token");
-//     }
-
-//     // check if incoming refresh token is same as the refresh token attached in the user document
-//     // This shows that the refresh token is used or not
-//     // Once it is used, we are replacing it with new refresh token below
-//     if (incomingRefreshToken !== user?.refreshToken) {
-//       // If token is valid but is used already
-//       throw new Error( "Refresh token is expired or used");
-//     }
-//     const options = {
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === "production",
-//     };
-
-//     const { accessToken, refreshToken: newRefreshToken } =
-//       await generateAccessAndRefreshTokens(user._id);
-
-//     return res
-//       .status(200)
-//       .cookie("accessToken", accessToken, options)
-//       .cookie("refreshToken", newRefreshToken, options)
-//       .json(
-//         new ApiResponse(
-//           200,
-//           { accessToken, refreshToken: newRefreshToken },
-//           "Access token refreshed"
-//         )
-//       );
-//   } catch (error) {
-//     throw new Error( error?.message || "Invalid refresh token");
-//   }
-// });
-
 export const refreshAccessToken = async (req: Request, res: Response) => {
-  const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
-
-  if (!incomingRefreshToken) {
-    throw new Error("Unauthorized request");
-  }
-
   try {
-    const decodedToken = jwt.verify(
-      incomingRefreshToken,
-      process.env.REFRESH_TOKEN_SECRET!
-    ) as { _id: number }; // Type assertion for decodedToken
-    let user: User | null;
-    // user = await UserRepository.findOne({ id: decodedToken?._id });
+    let result = await refreshAccessTokenService(req, res);
+    let { accessToken, options, newRefreshToken, status, statusCode, message } =
+      result;
 
-    user = await UserRepository.findOneBy({ id: decodedToken?._id });
-
-    // if (user.length === 0) {
-    //   throw new Error('Invalid refresh token');
-    // }
-
-    if (!user) {
-      throw new Error("Invalid refresh token");
+    if (!status) {
+      return res.status(statusCode ?? 500).json({
+        status: false,
+        message: message,
+      });
     }
 
-    if (incomingRefreshToken !== user?.refreshToken) {
-      throw new Error("Refresh token is expired or used");
+    if (!result || !accessToken || !newRefreshToken || !options) {
+      throw "Result not found";
     }
-
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    };
-
-    const { accessToken, refreshToken: newRefreshToken } =
-      await generateAccessAndRefreshTokens(user.id);
 
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options);
-    // .json(
-    //   new ApiResponse(
-    //     200,
-    //     { accessToken, refreshToken: newRefreshToken },
-    //     "Access token refreshed"
-    //   )
-    // );
+      .cookie("refreshToken", newRefreshToken, options)
+      .json({
+        accessToken,
+        refreshToken: newRefreshToken,
+        message: "Access token refreshed",
+      });
   } catch (error) {
     // throw new Error(error?.message || "Invalid refresh token");
-    throw new Error("Invalid refresh token");
+    // throw new Error("Invalid refresh token");
+    return res.status(403).json({
+      status: false,
+      message: "Invalid refresh token",
+    });
   }
 };
 
