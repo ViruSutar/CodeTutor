@@ -41,7 +41,6 @@ export async function registerUserService(
       isActive: true,
     });
 
-    console.log("user>>", user);
 
     if (!user) {
       return {
@@ -191,7 +190,7 @@ export async function refreshAccessTokenService(req: Request, res: Response) {
 
 export async function logoutUserService(userId: number) {
   try {
-    await UserRepository.update({ id: userId }, { refreshToken: undefined });
+    await UserRepository.update({ id: userId }, { refreshToken: null });
 
     const options = {
       httpOnly: true,

@@ -8,7 +8,7 @@ import {
   logoutUserService,
   refreshAccessTokenService,
   registerUserService,
-} from "../services/AuthService";
+} from "../services/auth.service";
 import { validationResult } from "express-validator";
 const UserRepository = AppDataSource.getRepository(User);
 
@@ -116,7 +116,14 @@ const loginUser = async (req: Request, res: Response) => {
 
 const logoutUser = async (req: Request, res: Response) => {
   try {
-    const userId: number = req.body.userId;
+    // const userId: number = req.body.userId;
+
+    const reqUser = req?.user
+    const userId = reqUser?.id
+
+    if(!userId){
+      throw "UserId not found"
+    }
 
     let result = await logoutUserService(userId);
     let {
@@ -129,6 +136,7 @@ const logoutUser = async (req: Request, res: Response) => {
       .clearCookie("refreshToken", options)
       .json({status:true,message:"Successfully logged out"});
   } catch (error) {
+    console.error("<---Error in logoutUser function--->",error)
     return res.status(500).json({
       status:false,
       message:"Failed to logout"

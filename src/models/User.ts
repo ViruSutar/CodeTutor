@@ -18,8 +18,8 @@ export class User {
   @Column()
   public password!: string;
 
-  @Column({nullable:true})
-  public refreshToken!:string
+  @Column({ type: 'text',nullable:true})
+  public refreshToken!:string | null
 
   @Column()
   public isActive!: boolean;
