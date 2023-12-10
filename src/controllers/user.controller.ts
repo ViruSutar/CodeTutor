@@ -1,8 +1,4 @@
-import { DataSource } from "typeorm";
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import { User } from "../models/User";
-import AppDataSource from "../Config/db";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import {
   loginUserService,
   logoutUserService,
@@ -10,29 +6,7 @@ import {
   registerUserService,
 } from "../services/auth.service";
 import { validationResult } from "express-validator";
-const UserRepository = AppDataSource.getRepository(User);
 
-const generateAccessAndRefreshTokens = async (userId: number) => {
-  try {
-    const user = await UserRepository.findOne({ where: { id: userId } });
-
-    if (!user) {
-      throw new Error("User does not exist");
-    }
-
-    const accessToken = await user.generateAccessToken();
-    const refreshToken = await user.generateRefreshToken();
-
-    // attach refresh token to the user to avoid refreshing the access token with multiple refresh tokens
-    user.refreshToken = refreshToken;
-
-    await UserRepository.save(user);
-
-    return { accessToken, refreshToken };
-  } catch (error) {
-    throw new Error("Something went wrong while generating the access token");
-  }
-};
 const registerUser = async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
