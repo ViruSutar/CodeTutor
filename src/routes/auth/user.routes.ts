@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { LoginValidator, RegisterValidator } from "../../validator/auth/user.validator";
-import { loginUser, registerUser,refreshAccessToken, logoutUser } from "../../controllers/user.controller";
+import { loginUser, registerUser,refreshAccessToken, logoutUser } from "../../controllers/auth.controller";
 import { validate } from "../../validator/validate";
 import { verifyJWT } from "../../middlewares/auth.middleware";
 
